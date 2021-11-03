@@ -1,12 +1,14 @@
 package io.hdavid.jumper;
 
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
 @AllArgsConstructor
+@Slf4j
 public class PortalHandler implements Runnable {
     private final Socket portal;
 
@@ -16,7 +18,7 @@ public class PortalHandler implements Runnable {
         try {
             js = Jumper.portalConnections.poll(57, TimeUnit.SECONDS);
             if (js == null) {
-                L.log("Portal Handler discarding poratl connection due to no Jumpers available");
+                log.info("Portal Handler discarding poratl connection due to no Jumpers available");
                 try { portal.close(); } catch (Exception IGNORED) { }
                 return;
             } else {
@@ -24,11 +26,11 @@ public class PortalHandler implements Runnable {
                 portal.getOutputStream().write(js.remoteHostAndPort.getBytes(StandardCharsets.US_ASCII));
                 portal.getOutputStream().write('\n');
                 portal.getOutputStream().flush();
-                L.log("Portal Handler just wrote bridge address");
+                log.info("Portal Handler just wrote bridge address");
                 Jumper.es.execute(new DualIoStream(js.orig, portal));
-                L.log("Portal Handler DualIOStream orig to portal");
+                log.info("Portal Handler DualIOStream orig to portal");
                 Jumper.es.execute(new DualIoStream(portal, js.orig));
-                L.log("Portal Handler DualIOStream portal to orig");
+                log.info("Portal Handler DualIOStream portal to orig");
             }
         } catch (Exception e){
             e.printStackTrace();
