@@ -1,0 +1,20 @@
+-------------------------------------------------------------------
+server
+	fork controller
+		open portal serve port
+		while (accept)
+			fork accept-portal-conn
+				get next [local-connection-request] block N secs
+				if connect_req_sok
+					send host/port
+					FORK DUAL COMM
+				else
+					channel cleanup
+	read mappings
+	update local hosts file
+	for m in mappings
+		fork localsocketserver.bind(m)
+			while (lss.accept() & still_running)
+				fork add [local-connection-request]
+					if conn not handled in 1 s
+						channel cleanup
